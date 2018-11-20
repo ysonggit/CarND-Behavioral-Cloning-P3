@@ -7,17 +7,20 @@ import cv2
 import numpy as np
 import sys, argparse
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Lambda, Convolution2D, Cropping2D, Dropout
+from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D, Dropout
 from keras.layers.pooling import MaxPooling2D
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
+import time
 
 def createLeNetModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
     model.add(Cropping2D(cropping=((70,25), (0,0))))
-    model.add(Convolution2D(6,5,5,activation='relu'))
+    model.add(Conv2D(6, (5,5), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
-    model.add(Convolution2D(6,5,5,activation='relu'))
+    model.add(Conv2D(6, (5,5), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
     model.add(Flatten())
@@ -30,17 +33,26 @@ def createNvidiaModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
     model.add(Cropping2D(cropping=((70,25), (0,0))))
-    model.add(Convolution2D(24,5,5, subsample=(2,2), activation='relu'))
-    model.add(Convolution2D(36,5,5, subsample=(2,2), activation='relu'))
-    model.add(Convolution2D(48,5,5, subsample=(2,2), activation='relu'))
-    model.add(Convolution2D(64,3,3,activation='relu'))
-    model.add(Convolution2D(64,3,3,activation='relu'))
+    model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
+    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
+    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(Flatten())
     model.add(Dense(100))
     model.add(Dense(50))
     model.add(Dense(10))
     model.add(Dense(1))
     return model
+
+def plotHistory(history_object):
+    plt.plot(history_object.history['loss'])
+    plt.plot(history_object.history['val_loss'])
+    plt.title('model mean squared error loss')
+    plt.ylabel('mean squared error loss')
+    plt.xlabel('epoch')
+    plt.legend(['training set', 'validation set'], loc='upper right')
+    plt.show()
 
 def main(arguments):
     parser = argparse.ArgumentParser(
@@ -87,17 +99,30 @@ def main(arguments):
             measurement = float(line[3])
             # center if offset = 0, left if offset < 0, right if offset > 0
             measurements.append(measurement+offsets[img_idx])
+            # Flipping
+            images.append(cv2.flip(image,1))
+            measurements.append(-1*(measurement+offsets[img_idx]))
 
     X_train = np.array(images)
     y_train = np.array(measurements)
 
     print("X_train.shape = ", X_train.shape)
     print("y_train.shape = ", y_train.shape)
+    #print("split train set to the train and validation sets")
+    #X_train_1, X_validation, y_train_1, y_validation = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+    #print("X_train_1.shape = ", X_train_1.shape)
+    #print("y_train_1.shape = ", y_train_1.shape)
 
-    model.compile(loss='mse', optimizer='adam')
-    model.fit(X_train, y_train, validation_split=0.2, shuffle=True, nb_epoch=7)
+    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
+    print('Start training model ...')
+    start_time = time.time()
+    #model.fit(X_train_1, y_train_1, validation_split=0.2, shuffle=True, nb_epoch=7)
+    history = model.fit(X_train_1, y_train_1, nb_epoch=3, validation_data=0.2, verbose=1)
+    print("Training took {0} seconds.".format(time.time() - start_time))
     model.save(outputfile)
     print("Model saved as %s" %outputfile)
+
+    plotHistory(history)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
