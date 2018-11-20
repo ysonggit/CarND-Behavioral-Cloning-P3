@@ -117,7 +117,7 @@ def main(arguments):
     print('Start training model ...')
     start_time = time.time()
     #model.fit(X_train_1, y_train_1, validation_split=0.2, shuffle=True, nb_epoch=7)
-    history = model.fit(X_train_1, y_train_1, nb_epoch=3, validation_data=0.2, verbose=1)
+    history = model.fit(X_train, y_train, nb_epoch=3, validation_data=0.2, verbose=1)
     print("Training took {0} seconds.".format(time.time() - start_time))
     model.save(outputfile)
     print("Model saved as %s" %outputfile)
