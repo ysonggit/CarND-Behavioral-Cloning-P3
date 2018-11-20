@@ -1,6 +1,8 @@
 '''
 yang song
 ysong.sc@gmail.com
+usage: python train.py -m <modelname> -b <batchsize> -e <epochs>
+supports both LeNet and Nvidia Models
 '''
 import csv
 import cv2
@@ -16,7 +18,7 @@ import time, calendar
 def createLeNetModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
-    model.add(Cropping2D(cropping=((50,25), (0,0))))
+    model.add(Cropping2D(cropping=((75,25), (0,0)))) # get (75,25) from tutorial video
     model.add(Conv2D(6, (5,5), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
@@ -32,7 +34,7 @@ def createLeNetModel():
 def createNvidiaModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
-    model.add(Cropping2D(cropping=((50,25), (0,0))))
+    model.add(Cropping2D(cropping=((50,20), (0,0)))) # get (50,20) from Darien Martinez
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
     model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
@@ -55,15 +57,40 @@ def plotHistory(history_object, outfilename):
     plt.ylabel('mean squared error loss')
     plt.xlabel('epoch')
     plt.legend(['training set', 'validation set'], loc='upper right')
-    #plt.show()
+    plt.show()
     img_url = './images/loss_metrics_{}.png'.format(outfilename)
     plt.savefig(img_url)
     print("Save loss metrics to {}".format(img_url))
 
+'''
+This function is originally done by Darien Martinez (https://darienmt.com/)
+Source Code: https://github.com/darienmt/CarND-Behavioral-Cloning-P3/blob/master/clone.py#L19
+This function, plus the lines 123 to 128, played an amazing optimzation magic to the model training process
+The impacts of flipping the images vertically and inverting the signs are much more significant
+than tuning the parameters like batch size and epochs
+'''
+def loadImageAndMeasurement(dataPath, imagePath, measurement, images, measurements):
+    """
+    Executes the following steps:
+      - Loads the image from `dataPath` and `imagPath`.
+      - Converts the image from BGR to RGB.
+      - Adds the image and `measurement` to `images` and `measurements`.
+      - Flips the image vertically.
+      - Inverts the sign of the `measurement`.
+      - Adds the flipped image and inverted `measurement` to `images` and `measurements`.
+    """
+    originalImage = cv2.imread(dataPath + '/' + imagePath.strip())
+    image = cv2.cvtColor(originalImage, cv2.COLOR_BGR2RGB)
+    images.append(image)
+    measurements.append(measurement)
+    # Flipping
+    images.append(cv2.flip(image,1))
+    measurements.append(measurement*-1.0)
+
 def main(arguments):
     parser = argparse.ArgumentParser(description='Model Trainer')
     parser.add_argument('-m', '--model', help="model name")
-    parser.add_argument('-b', '--batchsize', help="batch size", type=int, default=60)
+    parser.add_argument('-b', '--batchsize', help="batch size", type=int, default=32)
     parser.add_argument('-e', '--epochs', help="number of epochs", type=int, default=3)
     args = parser.parse_args(arguments)
     #print(args.model)
@@ -78,6 +105,7 @@ def main(arguments):
 
     model = createLeNetModel() if args.model == 'lenet' else createNvidiaModel()
 
+
     # refactor codes used in the tutorial videos
     lines = []
     i = 0
@@ -88,27 +116,22 @@ def main(arguments):
             if i > 0: # bypass the csv header line
                 lines.append(line)
             i+=1
+
+    dataPath = './data'
     images = []
     measurements = []
-    offsets = [0, -0.2, 0.2]
+    correction = 0.2
     for line in lines:
-        for img_idx in range(3):
-            source_path = line[img_idx]
-            filename = source_path.split('/')[-1]
-            current_path = './data/IMG/' +filename
-            orig_image = cv2.imread(current_path)
-            image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
-            images.append(image)
-            measurement = float(line[3])
-            # center if offset = 0, left if offset < 0, right if offset > 0
-            measurements.append(measurement+offsets[img_idx])
-            # Flipping
-            images.append(cv2.flip(image,1))
-            measurements.append(-1*(measurement+offsets[img_idx]))
+        measurement = float(line[3])
+        # Center
+        loadImageAndMeasurement(dataPath, line[0], measurement, images, measurements)
+        # Left
+        loadImageAndMeasurement(dataPath, line[1], measurement + correction, images, measurements)
+        # Right
+        loadImageAndMeasurement(dataPath, line[2], measurement - correction, images, measurements)
 
     X_train = np.array(images)
     y_train = np.array(measurements)
-
     print("X_train.shape = ", X_train.shape)
     print("y_train.shape = ", y_train.shape)
 
