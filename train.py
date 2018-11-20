@@ -1,8 +1,6 @@
 '''
 yang song
 ysong.sc@gmail.com
-usage: python train.py -m <modelname> -b <batchsize> -e <epochs>
-supports both LeNet and Nvidia Models
 '''
 import csv
 import cv2
@@ -18,7 +16,7 @@ import time, calendar
 def createLeNetModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
-    model.add(Cropping2D(cropping=((75,25), (0,0)))) # get (75,25) from tutorial video
+    model.add(Cropping2D(cropping=((75,25), (0,0))))
     model.add(Conv2D(6, (5,5), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
@@ -34,7 +32,7 @@ def createLeNetModel():
 def createNvidiaModel():
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
-    model.add(Cropping2D(cropping=((50,20), (0,0)))) # get (50,20) from Darien Martinez
+    model.add(Cropping2D(cropping=((50,20), (0,0))))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
     model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
@@ -56,14 +54,14 @@ def plotHistory(history_object, outfilename):
     plt.title('model mean squared error loss')
     plt.ylabel('mean squared error loss')
     plt.xlabel('epoch')
-    plt.legend(['training set', 'validation set'], loc='upper right')
-    plt.show()
+    plt.legend(['training set', 'validation set'], loc='upper left')
+    # plt.show()
     img_url = './images/loss_metrics_{}.png'.format(outfilename)
     plt.savefig(img_url)
     print("Save loss metrics to {}".format(img_url))
 
 '''
-This function is originally done by Darien Martinez (https://darienmt.com/)
+This function was originally done by Darien Martinez (https://darienmt.com/)
 Source Code: https://github.com/darienmt/CarND-Behavioral-Cloning-P3/blob/master/clone.py#L19
 This function, plus the lines 123 to 128, played an amazing optimzation magic to the model training process
 The impacts of flipping the images vertically and inverting the signs are much more significant
@@ -105,7 +103,6 @@ def main(arguments):
 
     model = createLeNetModel() if args.model == 'lenet' else createNvidiaModel()
 
-
     # refactor codes used in the tutorial videos
     lines = []
     i = 0
@@ -136,10 +133,9 @@ def main(arguments):
     print("y_train.shape = ", y_train.shape)
 
     model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-    print('Start training model ...')
+    print('Start training {} model: batch size = {}, epochs = {}'.format(args.model, args.batchsize, args.epochs))
     start_time = time.time()
-    #model.fit(X_train_1, y_train_1, validation_split=0.2, shuffle=True, nb_epoch=7)
-    history = model.fit(X_train, y_train, nb_epoch=args.epochs, batch_size = args.batchsize, validation_split=0.2, shuffle=True, verbose=1)
+    history = model.fit(X_train, y_train, epochs=args.epochs, batch_size = args.batchsize, validation_split=0.2, shuffle=True, verbose=1)
     print("Training took {0} seconds.".format(time.time() - start_time))
     model.save(outputfile+'.h5')
     print("Model saved as {}.h5".format(outputfile))
