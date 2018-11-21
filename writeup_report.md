@@ -37,6 +37,8 @@ My project includes the following files:
 * model.h5 containing a trained convolution neural network
 * writeup_report.md summarizing the results
 
+My Project Github: https://github.com/ysonggit/CarND-Behavioral-Cloning-P3
+
 #### 2. Submission includes functional code
 Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing
 ```sh
@@ -207,7 +209,7 @@ I plot the train set loss and the validation set loss below. The training set lo
 
 I implemented and verified the algorithm of Darien Martinez [4] and feel very surprised that the model does a great job of driving the car after only 3 epochs of training.
 
-Moreover, I also want to know if the trained Nvidia model would perform better when tuning the parameters, such as increasing batch size from 32 to 64, or increase the epochs from 3 to 7, or 10. By comparing the result simulations, there are no significant difference among those results. In other words, tuning the number of epochs or batch size would not improve much performance.
+Moreover, I also want to know if the trained Nvidia model would perform better when tuning the parameters, such as increasing batch size from 32 to 64, or increase the epochs from 3 to 7, or 10. By comparing the result simulations, there are no significant difference among those results. In other words, tuning the number of epochs or batch size would not improve as much performance as adopting proper data augmentation methods.
 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road. Here is the link to the output simulation [video](./video.mp4) of the autonomous drive.
 
