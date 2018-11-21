@@ -21,6 +21,7 @@ The goals / steps of this project are the following:
 [image5]: ./images/cnn-architecture-624x890.png "Nvidia Model Architecture"
 [image6]: ./images/2018_11_20_16_37_19_117.jpg "Camera Image"
 [image7]: ./images/lenet.png "Lenet Architecture"
+[image8]: ./images/model.png "Nvidia Model"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.
@@ -161,6 +162,7 @@ _________________________________________________________________
 
 Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
 
+![model graph][image8]
 
 #### 3. Creation of the Training Set & Training Process
 
@@ -168,7 +170,7 @@ I observe that the common fact between two accidental scenarios, where the car d
 1. Horizontal flip the images (code lines 82-86)
 2. Combine center camera image with left and right camera images (code lines 124-128)
 
-With the data augmentation process, the trainer has more data points to learn from, that is, 48216 of 160x320x3 images.
+With the data augmentation process, the trainer has more data points to learn from, that is, 48216 of 160x320x3 images. The simulations prove that the data augmentation is the key to the success of training the Nvidia model.
 
 Finally I randomly shuffled the data set and put 20% of the data into a validation set: 38572 out of 48216 images are used for training, and the rest 9644 samples are used for validating. I used this training data for training the model. The validation set helped determine if the model was over or under fitting.
 
@@ -200,7 +202,7 @@ Training took 4326.44630909 seconds.
 Model saved as nvidia_model_batch_32_epoch_7_1542728717.h5
 ```
 
-I plot the train set loss and the validation set loss below. The training set loss looks good because it decreases as the epochs increase. But the validation set loss does not change much. 
+I plot the train set loss and the validation set loss below. The training set loss looks good because it decreases as the epochs increase. But the validation set loss does not change much. Unfortunately, I am not able to find the root cause why the validation set loss does not decrease as epochs increase.
 ![loss plot][image4]
 
 I implemented and verified the algorithm of Darien Martinez [4] and feel very surprised that the model does a great job of driving the car after only 3 epochs of training.
